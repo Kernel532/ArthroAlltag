@@ -4,6 +4,20 @@
     <p class="text-slate-500 mt-1">Finde Alltagstipps für Küche, Garten, Haushalt und mehr.</p>
   </header>
 
+  @if (progress(); as p) {
+    <section class="mb-6" aria-label="Mein Fortschritt">
+      <h2 class="text-xl font-semibold text-slate-900 mb-3">Mein Fortschritt</h2>
+      <app-progress-summary [progress]="p" />
+      @if (p.abgeschlosseneInhalte.length > 0) {
+        <ul class="mt-3 text-sm text-slate-600 space-y-1">
+          @for (item of p.abgeschlosseneInhalte; track item.contentId) {
+            <li>&#10003; {{ item.titel }} <span class="text-slate-400">({{ item.kategorie }})</span></li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
   <label for="search" class="sr-only">Suche nach Alltagstipps</label>
   <input
     id="search"
@@ -64,9 +78,32 @@
           @if (content.schwierigkeitsgrad) {
             <p class="text-slate-400 text-sm mt-2">Schwierigkeit: {{ content.schwierigkeitsgrad }}</p>
           }
+          <button
+            type="button"
+            (click)="toggleCompleted(content)"
+            [attr.aria-pressed]="isCompleted(content.id)"
+            [class.bg-green-600]="isCompleted(content.id)"
+            [class.text-white]="isCompleted(content.id)"
+            [class.bg-slate-100]="!isCompleted(content.id)"
+            [class.text-slate-700]="!isCompleted(content.id)"
+            class="mt-3 rounded-full px-4 py-2 text-sm font-medium transition-colors"
+          >
+            @if (isCompleted(content.id)) {&#10003; }{{ completionLabel(content) }}
+          </button>
+          <div class="mt-3">
+            <p class="text-slate-500 text-sm">Deine Bewertung</p>
+            <app-star-rating [value]="ownRating(content.id)" [label]="'Bewertung fuer ' + content.titel" (rated)="rate(content, $event)" />
+          </div>
         </article>
       }
     </div>
+    <app-pagination
+      label="Seiten der Tipps und Übungen"
+      [page]="currentPage()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      (pageChange)="goToPage($event)"
+    />
   }
 
   <section class="mt-10">

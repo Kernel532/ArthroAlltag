@@ -1,5 +1,5 @@
-<div class="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-10" (click)="cancel.emit()">
-  <div class="w-full max-w-lg bg-white rounded-2xl shadow-md p-8 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+<div class="fixed inset-0 bg-slate-900/40 flex items-center justify-center p-4 z-10" role="presentation" (click)="cancel.emit()">
+  <div class="w-full max-w-lg bg-white rounded-2xl shadow-md p-5 sm:p-8 max-h-[90vh] overflow-y-auto" role="presentation" (click)="$event.stopPropagation()">
     <h2 class="text-xl font-semibold text-slate-900 mb-6">
       {{ content() ? 'Tipp bearbeiten' : 'Neuen Tipp anlegen' }}
     </h2>
@@ -38,6 +38,21 @@
           <option value="" disabled>Bitte waehlen ...</option>
           @for (category of categories(); track category.id) {
             <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div>
+        <label for="modul" class="block text-base font-medium text-slate-700 mb-1">Modul (Freischaltung)</label>
+        <select
+          id="modul"
+          [value]="modulId() ?? ''"
+          (change)="onModulChange($event)"
+          class="w-full rounded-lg border border-slate-300 px-4 py-3 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="" disabled>Bitte waehlen ...</option>
+          @for (modul of modules(); track modul.id) {
+            <option [value]="modul.id">{{ modul.name }}</option>
           }
         </select>
       </div>

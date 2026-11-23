@@ -1,0 +1,86 @@
+<section>
+  <header class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <h2 class="text-xl font-semibold text-slate-900">Tipps und Übungen</h2>
+    <button
+      type="button"
+      (click)="openCreateForm()"
+      class="rounded-lg bg-blue-600 text-white text-base font-medium px-5 py-3 hover:bg-blue-700 transition-colors"
+    >
+      + Neuer Tipp
+    </button>
+  </header>
+
+  <div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Kategorie-Filter">
+    <app-category-filter [categories]="categories()" [selectedCategoryId]="selectedCategoryId()" (select)="selectCategory($event)" />
+  </div>
+
+  <app-error-message [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-loading-spinner text="Lade Tipps ..." />
+  } @else if (contents().length === 0) {
+    <p class="text-slate-500 text-base">Noch keine Tipps in dieser Kategorie.</p>
+  } @else {
+    <div class="space-y-3">
+      @for (content of contents(); track content.id) {
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          @if (content.bildUrl) {
+            <img [src]="content.bildUrl" [alt]="content.titel" class="w-full h-40 sm:w-20 sm:h-20 object-cover rounded-lg sm:shrink-0" />
+          }
+          <div class="min-w-0 flex-1">
+            <span class="inline-block max-w-full text-sm font-medium text-blue-700 bg-blue-50 rounded-full px-3 py-1 mb-1">
+              {{ content.kategorie.name }}@if (content.modul) { &middot; {{ content.modul.name }} }
+            </span>
+            <h3 class="text-lg font-semibold text-slate-900 truncate">{{ content.titel }}</h3>
+            <p class="text-slate-600 text-sm truncate">{{ content.beschreibung }}</p>
+            <p class="text-sm text-slate-500 mt-1 flex items-center gap-2">
+              @if (content.durchschnittsBewertung !== null) {
+                <app-star-rating [value]="content.durchschnittsBewertung" [readonly]="true" label="Durchschnittsbewertung" />
+                <span>&#216; {{ content.durchschnittsBewertung }} ({{ content.anzahlBewertungen }})</span>
+              } @else {
+                <span>Noch keine Bewertungen</span>
+              }
+            </p>
+          </div>
+          <div class="flex gap-2 sm:shrink-0">
+            <button
+              type="button"
+              (click)="openEditForm(content)"
+              aria-label="Bearbeiten"
+              class="flex-1 sm:flex-none rounded-lg bg-slate-100 text-slate-700 text-base font-medium px-4 py-3 hover:bg-slate-200 transition-colors"
+            >
+              Bearbeiten
+            </button>
+            <button
+              type="button"
+              (click)="onDelete(content)"
+              aria-label="Löschen"
+              class="flex-1 sm:flex-none rounded-lg bg-red-50 text-red-700 text-base font-medium px-4 py-3 hover:bg-red-100 transition-colors"
+            >
+              Löschen
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+    <app-pagination
+      label="Seiten der Tipps und Übungen"
+      [page]="currentPage()"
+      [totalPages]="totalPages()"
+      [totalElements]="totalElements()"
+      (pageChange)="goToPage($event)"
+    />
+  }
+
+  @if (showForm()) {
+    <app-content-form
+      [content]="editingContent()"
+      [categories]="categories()"
+      [modules]="modules()"
+      [errorMessage]="formErrorMessage()"
+      [isSaving]="isSaving()"
+      (save)="onSave($event)"
+      (cancel)="closeForm()"
+    />
+  }
+</section>

@@ -1,0 +1,24 @@
+@if (totalPages() > 1) {
+  <nav class="flex items-center justify-between gap-2 mt-4" [attr.aria-label]="label()">
+    <button
+      type="button"
+      (click)="go(page() - 1)"
+      [disabled]="isFirst()"
+      class="rounded-lg bg-slate-100 text-slate-700 text-base font-medium px-4 py-3 hover:bg-slate-200 disabled:opacity-40 transition-colors"
+    >
+      &larr; Zurück
+    </button>
+    <span class="text-sm text-slate-600 text-center">
+      Seite {{ page() + 1 }} von {{ totalPages() }}
+      <span class="block text-slate-400">{{ totalElements() }} Einträge</span>
+    </span>
+    <button
+      type="button"
+      (click)="go(page() + 1)"
+      [disabled]="isLast()"
+      class="rounded-lg bg-slate-100 text-slate-700 text-base font-medium px-4 py-3 hover:bg-slate-200 disabled:opacity-40 transition-colors"
+    >
+      Weiter &rarr;
+    </button>
+  </nav>
+}

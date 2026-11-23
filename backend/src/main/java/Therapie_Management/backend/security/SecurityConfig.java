@@ -2,6 +2,7 @@ package Therapie_Management.backend.security;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -29,9 +30,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final List<String> allowedOrigins;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -40,19 +44,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            @Value("${spring.h2.console.enabled:false}") boolean h2ConsoleEnabled) throws Exception {
         http
             // Stateless REST-API mit JWT statt Session-Cookies -> kein CSRF-Schutz noetig.
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(requests -> requests
-                .requestMatchers("/api/auth/login").permitAll()
-                // Nur fuer die lokale Entwicklung offen - die H2-Console ist ein DB-Admin-Tool
-                // und braucht keinen Anwendungs-Token-Schutz.
-                .requestMatchers("/h2-console/**").permitAll()
-                .anyRequest().authenticated()
-            )
+            .authorizeHttpRequests(requests -> {
+                requests.requestMatchers("/api/auth/login", "/api/auth/register").permitAll();
+                // Nur freigegeben, wenn die Console explizit aktiviert wurde (lokale
+                // Entwicklung) - sie ist ein DB-Admin-Tool ohne Anwendungs-Token-Schutz.
+                if (h2ConsoleEnabled) {
+                    requests.requestMatchers("/h2-console/**").permitAll();
+                }
+                requests.anyRequest().authenticated();
+            })
             // Die H2-Console rendert sich selbst in einem <iframe>; Spring Securitys Standard
             // "X-Frame-Options: DENY" wuerde das Anzeigen im Browser sonst blockieren.
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
@@ -71,11 +78,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /** Erlaubt dem lokalen Angular-Dev-Server (Port 4200), die API aufzurufen. */
+    /** Erlaubt den konfigurierten Frontend-Origins (app.cors.allowed-origins), die API aufzurufen. */
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedOrigins(allowedOrigins);
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -3,6 +3,9 @@ package Therapie_Management.backend.entity;
 import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -20,6 +23,11 @@ public class Patient extends User {
     private String diagnostik;
 
     private String notizen;
+
+    /** Zustaendiger Therapeut; null, solange der Patient noch niemandem zugeordnet ist. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "therapeut_id")
+    private Therapeut therapeut;
 
     public Patient(String id, String vorname, String nachname, LocalDate geburtsdatum,
                    String passwortHash, String diagnostik, String notizen) {

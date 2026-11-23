@@ -1,5 +1,6 @@
 package Therapie_Management.backend.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import Therapie_Management.backend.dto.LoginRequest;
 import Therapie_Management.backend.dto.LoginResponse;
+import Therapie_Management.backend.dto.RegisterRequest;
 import Therapie_Management.backend.service.AuthService;
 import jakarta.validation.Valid;
 
@@ -24,5 +26,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 }

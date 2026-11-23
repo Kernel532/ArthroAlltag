@@ -1,8 +1,7 @@
 package Therapie_Management.backend.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,14 +9,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import Therapie_Management.backend.dto.ContentResponse;
+import Therapie_Management.backend.dto.PageResponse;
 import Therapie_Management.backend.service.ContentService;
 
 /**
- * Allgemeiner, rollenunabhaengiger Lesezugriff auf Tipps - z.B. fuer eine Detailansicht,
- * die von einem Favoriten aus verlinkt wird, ohne den Umweg ueber /api/patients/{id}/contents.
+ * Lesezugriff auf alle Tipps - nur fuer Therapeuten. Patienten nutzen
+ * /api/patients/{id}/contents und sehen dort nur freigeschaltete Module.
  */
 @RestController
 @RequestMapping("/api/contents")
+@PreAuthorize("hasRole('THERAPEUT')")
 public class ContentController {
 
     private final ContentService contentService;
@@ -27,8 +28,11 @@ public class ContentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ContentResponse>> getContents(@RequestParam(required = false) Integer categoryId) {
-        return ResponseEntity.ok(contentService.getContents(categoryId));
+    public ResponseEntity<PageResponse<ContentResponse>> getContents(
+            @RequestParam(required = false) Integer categoryId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(contentService.getContents(categoryId, page, size));
     }
 
     @GetMapping("/{contentId}")

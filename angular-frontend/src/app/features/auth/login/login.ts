@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth';
 import { ErrorResponse } from '../../../shared/models/error-response.model';
@@ -7,7 +7,7 @@ import { ErrorMessage } from '../../../shared/components/error-message/error-mes
 
 @Component({
   selector: 'app-login',
-  imports: [ErrorMessage],
+  imports: [ErrorMessage, RouterLink],
   templateUrl: './login.html'
 })
 export class Login {

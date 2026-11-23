@@ -13,16 +13,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import Therapie_Management.backend.dto.ContentCreateRequest;
 import Therapie_Management.backend.dto.ContentResponse;
 import Therapie_Management.backend.dto.ModuleResponse;
+import Therapie_Management.backend.dto.PageResponse;
 import Therapie_Management.backend.dto.PatientResponse;
+import Therapie_Management.backend.dto.ProgressResponse;
 import Therapie_Management.backend.dto.UnlockModuleRequest;
 import Therapie_Management.backend.service.ContentService;
 import Therapie_Management.backend.service.ModuleService;
 import Therapie_Management.backend.service.PatientService;
+import Therapie_Management.backend.service.ProgressService;
 import jakarta.validation.Valid;
 
 /**
@@ -38,30 +42,75 @@ public class TherapeutController {
     private final ContentService contentService;
     private final ModuleService moduleService;
     private final PatientService patientService;
+    private final ProgressService progressService;
 
     public TherapeutController(ContentService contentService, ModuleService moduleService,
-                                PatientService patientService) {
+                                PatientService patientService, ProgressService progressService) {
         this.contentService = contentService;
         this.moduleService = moduleService;
         this.patientService = patientService;
+        this.progressService = progressService;
     }
 
-    /** Patienten-Auswahl fuer die Modul-Freischaltung im Frontend. */
+    /** Eigene Patienten, seitenweise. */
     @GetMapping("/patients")
-    public ResponseEntity<List<PatientResponse>> getPatients(@P("therapeutId") @PathVariable String therapeutId) {
-        return ResponseEntity.ok(patientService.getAllPatients());
+    public ResponseEntity<PageResponse<PatientResponse>> getPatients(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(patientService.getPatientsOfTherapeut(therapeutId, page, size));
+    }
+
+    /** Patienten ohne Therapeut, die uebernommen werden koennen (seitenweise). */
+    @GetMapping("/patients/unassigned")
+    public ResponseEntity<PageResponse<PatientResponse>> getUnassignedPatients(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(patientService.getUnassignedPatients(page, size));
+    }
+
+    /** Fortschritt der eigenen Patienten; page/size entsprechen der Patientenliste. */
+    @GetMapping("/patients/progress")
+    public ResponseEntity<PageResponse<ProgressResponse>> getPatientsProgress(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "" + PageResponse.DEFAULT_SIZE) int size) {
+        return ResponseEntity.ok(progressService.getProgressOfTherapeutPatients(therapeutId, page, size));
+    }
+
+    @GetMapping("/patients/{patientId}/progress")
+    public ResponseEntity<ProgressResponse> getPatientProgress(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @PathVariable String patientId) {
+        return ResponseEntity.ok(progressService.getProgressForTherapeut(therapeutId, patientId));
+    }
+
+    @PostMapping("/patients/{patientId}/assignment")
+    public ResponseEntity<PatientResponse> assignPatient(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @PathVariable String patientId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(patientService.assignPatient(therapeutId, patientId));
+    }
+
+    @DeleteMapping("/patients/{patientId}/assignment")
+    public ResponseEntity<Void> unassignPatient(
+            @P("therapeutId") @PathVariable String therapeutId,
+            @PathVariable String patientId) {
+        patientService.unassignPatient(therapeutId, patientId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
-     * Nutzt dieselbe Service-Methode wie PatientController.getUnlockedModules() - dort fuer
-     * den Patienten selbst, hier fuer den Therapeuten, der den Freischaltstatus vor dem
+     * Nutzt dieselbe Logik wie PatientController.getUnlockedModules() - dort fuer
+     * den Patienten selbst, hier fuer den zustaendigen Therapeuten, der den Freischaltstatus vor dem
      * Freischalten sehen muss.
      */
     @GetMapping("/patients/{patientId}/modules")
     public ResponseEntity<List<ModuleResponse>> getPatientModules(
             @P("therapeutId") @PathVariable String therapeutId,
             @PathVariable String patientId) {
-        return ResponseEntity.ok(moduleService.getUnlockedModules(patientId));
+        return ResponseEntity.ok(moduleService.getUnlockedModulesForTherapeut(therapeutId, patientId));
     }
 
     @PostMapping("/contents")

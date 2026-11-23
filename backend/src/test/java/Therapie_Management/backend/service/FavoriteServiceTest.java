@@ -23,9 +23,7 @@ import Therapie_Management.backend.entity.Patient;
 import Therapie_Management.backend.entity.PatientFavorite;
 import Therapie_Management.backend.exception.ForbiddenException;
 import Therapie_Management.backend.exception.ValidationException;
-import Therapie_Management.backend.repository.ContentRepository;
 import Therapie_Management.backend.repository.PatientFavoriteRepository;
-import Therapie_Management.backend.repository.PatientRepository;
 
 /**
  * Unit-Test mit gemockten Repositories statt echter Datenbank - schnell, und prueft nur die
@@ -37,13 +35,13 @@ import Therapie_Management.backend.repository.PatientRepository;
 class FavoriteServiceTest {
 
     @Mock
-    private PatientRepository patientRepository;
-
-    @Mock
-    private ContentRepository contentRepository;
-
-    @Mock
     private PatientFavoriteRepository patientFavoriteRepository;
+
+    @Mock
+    private ContentAccessService accessService;
+
+    @Mock
+    private EntityFinder finder;
 
     @InjectMocks
     private FavoriteService favoriteService;
@@ -54,8 +52,8 @@ class FavoriteServiceTest {
         Content tipp = new Content();
         tipp.setId(1);
 
-        when(patientRepository.findById("v110001")).thenReturn(Optional.of(patient));
-        when(contentRepository.findById(1)).thenReturn(Optional.of(tipp));
+        when(finder.patient("v110001")).thenReturn(patient);
+        when(finder.content(1)).thenReturn(tipp);
         when(patientFavoriteRepository.existsByPatientIdAndTippId("v110001", 1)).thenReturn(false);
         when(patientFavoriteRepository.save(any(PatientFavorite.class))).thenAnswer(invocation -> {
             PatientFavorite favorite = invocation.getArgument(0);
@@ -72,9 +70,9 @@ class FavoriteServiceTest {
 
     @Test
     void addFavorite_wirftValidationException_wennBereitsFavorisiert() {
-        when(patientRepository.findById("v110001"))
-            .thenReturn(Optional.of(new Patient("v110001", "Elena", "Fischer", null, "hash", "Rhizarthrose", null)));
-        when(contentRepository.findById(1)).thenReturn(Optional.of(new Content()));
+        when(finder.patient("v110001"))
+            .thenReturn(new Patient("v110001", "Elena", "Fischer", null, "hash", "Rhizarthrose", null));
+        when(finder.content(1)).thenReturn(new Content());
         when(patientFavoriteRepository.existsByPatientIdAndTippId("v110001", 1)).thenReturn(true);
 
         assertThatThrownBy(() -> favoriteService.addFavorite("v110001", new FavoriteCreateRequest(1)))

@@ -1,0 +1,91 @@
+<section>
+  <h2 class="text-xl font-semibold text-slate-900 mb-4">Meine Patienten</h2>
+
+  <app-error-message [message]="errorMessage()" />
+
+  @if (patients().length === 0) {
+    <p class="text-slate-500 text-base mb-4">Dir sind noch keine Patienten zugeordnet.</p>
+  } @else {
+    <ul class="space-y-3 mb-6">
+      @for (patient of patients(); track patient.id) {
+        <li class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div class="min-w-0">
+              <p class="text-lg font-semibold text-slate-900">{{ patient.vorname }} {{ patient.nachname }}</p>
+              <p class="text-slate-600 text-sm">{{ patient.diagnostik }}</p>
+            </div>
+            <div class="flex gap-2 sm:shrink-0">
+              <button
+                type="button"
+                (click)="toggleModules(patient)"
+                [attr.aria-expanded]="expandedPatientId() === patient.id"
+                class="flex-1 sm:flex-none rounded-lg bg-blue-50 text-blue-700 text-base font-medium px-4 py-3 hover:bg-blue-100 transition-colors"
+              >
+                {{ expandedPatientId() === patient.id ? 'Module ausblenden' : 'Module' }}
+              </button>
+              <button
+                type="button"
+                (click)="releasePatient(patient)"
+                [disabled]="assigningPatientId() === patient.id"
+                class="flex-1 sm:flex-none rounded-lg bg-slate-100 text-slate-700 text-base font-medium px-4 py-3 hover:bg-slate-200 disabled:opacity-50 transition-colors"
+              >
+                Abgeben
+              </button>
+            </div>
+          </div>
+          @if (expandedPatientId() === patient.id) {
+            <app-patient-modules [patientId]="patient.id" [modules]="modules()" />
+          }
+          @if (progressByPatientId().get(patient.id); as p) {
+            <div class="mt-4">
+              <app-progress-summary [progress]="p" />
+              @if (p.abgeschlosseneInhalte.length > 0) {
+                <ul class="mt-3 text-sm text-slate-600 space-y-1">
+                  @for (item of p.abgeschlosseneInhalte; track item.contentId) {
+                    <li>&#10003; {{ item.titel }} <span class="text-slate-400">({{ item.kategorie }})</span></li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+    <app-pagination
+      label="Seiten der eigenen Patienten"
+      [page]="minePage()"
+      [totalPages]="mineTotalPages()"
+      [totalElements]="mineTotalElements()"
+      (pageChange)="goToMinePage($event)"
+    />
+  }
+
+  @if (unassignedTotalElements() > 0) {
+    <h3 class="text-lg font-semibold text-slate-900 mt-8 mb-3">Patienten ohne Therapeut</h3>
+    <ul class="space-y-3 mb-6">
+      @for (patient of unassignedPatients(); track patient.id) {
+        <li class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div class="min-w-0">
+            <p class="text-lg font-semibold text-slate-900">{{ patient.vorname }} {{ patient.nachname }}</p>
+            <p class="text-slate-600 text-sm">{{ patient.diagnostik }}</p>
+          </div>
+          <button
+            type="button"
+            (click)="assignPatient(patient)"
+            [disabled]="assigningPatientId() === patient.id"
+            class="sm:shrink-0 rounded-lg bg-blue-600 text-white text-base font-medium px-4 py-3 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            Uebernehmen
+          </button>
+        </li>
+      }
+    </ul>
+    <app-pagination
+      label="Seiten der Patienten ohne Therapeut"
+      [page]="unassignedPage()"
+      [totalPages]="unassignedTotalPages()"
+      [totalElements]="unassignedTotalElements()"
+      (pageChange)="goToUnassignedPage($event)"
+    />
+  }
+</section>

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { API_BASE_URL } from '../api-base-url';
-import { LoginRequest, LoginResponse } from '../../shared/models/auth.model';
+import { LoginRequest, LoginResponse, RegisterRequest } from '../../shared/models/auth.model';
 
 const STORAGE_KEY = 'therapie-management-auth';
 
@@ -20,6 +20,12 @@ export class AuthService {
   login(request: LoginRequest): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${API_BASE_URL}/auth/login`, request)
+      .pipe(tap((response) => this.setCurrentUser(response)));
+  }
+
+  register(request: RegisterRequest): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${API_BASE_URL}/auth/register`, request)
       .pipe(tap((response) => this.setCurrentUser(response)));
   }
 

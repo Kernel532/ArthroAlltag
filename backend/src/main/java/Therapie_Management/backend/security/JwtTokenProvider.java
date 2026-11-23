@@ -1,6 +1,9 @@
 package Therapie_Management.backend.security;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 import javax.crypto.SecretKey;
 
@@ -18,8 +21,8 @@ import io.jsonwebtoken.security.Keys;
  * diese Klasse bei jedem Request zur Token-Pruefung nutzt, existiert noch nicht -
  * generateToken() wird aber schon jetzt von AuthService.login() gebraucht.
  *
- * Kein Expiry-Claim gesetzt, da fuer das MVP laut Spezifikation keine Token-Ablaufzeit
- * vorgesehen ist.
+ * Tokens laufen nach app.jwt.expiration-minutes ab; abgelaufene Tokens bestehen
+ * validateToken() nicht mehr.
  */
 @Component
 public class JwtTokenProvider {
@@ -28,14 +31,21 @@ public class JwtTokenProvider {
 
     private final SecretKey signingKey;
 
-    public JwtTokenProvider(@Value("${app.jwt.secret}") String secret) {
+    private final Duration expiration;
+
+    public JwtTokenProvider(@Value("${app.jwt.secret}") String secret,
+                            @Value("${app.jwt.expiration-minutes}") long expirationMinutes) {
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.expiration = Duration.ofMinutes(expirationMinutes);
     }
 
     public String generateToken(String userId, Role role) {
+        Instant now = Instant.now();
         return Jwts.builder()
             .subject(userId)
             .claim(ROLE_CLAIM, role.name())
+            .issuedAt(Date.from(now))
+            .expiration(Date.from(now.plus(expiration)))
             .signWith(signingKey)
             .compact();
     }

@@ -12,6 +12,7 @@ public record ContentCreateRequest(
     @NotBlank(message = "Titel darf nicht leer sein") String titel,
     @NotBlank(message = "Beschreibung darf nicht leer sein") String beschreibung,
     @NotNull(message = "Kategorie muss angegeben werden") Integer kategorieId,
+    @NotNull(message = "Modul muss angegeben werden") Integer modulId,
     String bildUrl,
     Schwierigkeitsgrad schwierigkeitsgrad,
     String hilfsmittel

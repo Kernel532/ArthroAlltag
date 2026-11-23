@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Category } from '../../../shared/models/category.model';
 import { Content, ContentCreateRequest } from '../../../shared/models/content.model';
+import { Modul } from '../../../shared/models/modul.model';
 import { ContentForm } from './content-form';
 
 /**
@@ -12,6 +13,7 @@ import { ContentForm } from './content-form';
  */
 describe('ContentForm', () => {
   const kategorien: Category[] = [{ id: 1, name: 'Kueche' }];
+  const module: Modul[] = [{ id: 2, name: 'Gelenkschutz im Alltag', reihenfolge: 2, beschreibung: '' }];
 
   beforeEach(() => {
     TestBed.configureTestingModule({ imports: [ContentForm] });
@@ -20,6 +22,7 @@ describe('ContentForm', () => {
   function createFixture(): ComponentFixture<ContentForm> {
     const fixture = TestBed.createComponent(ContentForm);
     fixture.componentRef.setInput('categories', kategorien);
+    fixture.componentRef.setInput('modules', module);
     fixture.detectChanges();
     return fixture;
   }
@@ -27,7 +30,7 @@ describe('ContentForm', () => {
   function setValue(fixture: ComponentFixture<ContentForm>, selector: string, value: string): void {
     const element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement = fixture.nativeElement.querySelector(selector);
     element.value = value;
-    element.dispatchEvent(new Event(selector === '#kategorie' ? 'change' : 'input'));
+    element.dispatchEvent(new Event(selector === '#kategorie' || selector === '#modul' ? 'change' : 'input'));
     fixture.detectChanges();
   }
 
@@ -42,6 +45,9 @@ describe('ContentForm', () => {
     expect(button.disabled).toBe(true);
 
     setValue(fixture, '#kategorie', '1');
+    expect(button.disabled).toBe(true);
+
+    setValue(fixture, '#modul', '2');
     expect(button.disabled).toBe(false);
   });
 
@@ -53,12 +59,14 @@ describe('ContentForm', () => {
     setValue(fixture, '#titel', 'Neuer Tipp');
     setValue(fixture, '#beschreibung', 'Beschreibung');
     setValue(fixture, '#kategorie', '1');
+    setValue(fixture, '#modul', '2');
     fixture.nativeElement.querySelector('form').dispatchEvent(new Event('submit'));
 
     expect(emitted).toEqual({
       titel: 'Neuer Tipp',
       beschreibung: 'Beschreibung',
       kategorieId: 1,
+      modulId: 2,
       bildUrl: null,
       schwierigkeitsgrad: null,
       hilfsmittel: null
@@ -71,12 +79,15 @@ describe('ContentForm', () => {
       titel: 'Vorhandener Tipp',
       beschreibung: 'Vorhandene Beschreibung',
       kategorie: kategorien[0],
+      modul: module[0],
       bildUrl: null,
       schwierigkeitsgrad: null,
       hilfsmittel: null,
       erstelltDurchName: 'Maren Klein',
       erstelltAm: '2026-01-01T00:00:00',
-      aktualisiertAm: '2026-01-01T00:00:00'
+      aktualisiertAm: '2026-01-01T00:00:00',
+      durchschnittsBewertung: null,
+      anzahlBewertungen: 0
     };
 
     const fixture = createFixture();

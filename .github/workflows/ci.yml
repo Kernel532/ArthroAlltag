@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (Build, Tests, Checkstyle)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Build, Unit-/Integrationstests und Checkstyle
+        run: ./mvnw -B verify
+      - name: Berichte hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-berichte
+          path: |
+            backend/target/surefire-reports/
+            backend/target/checkstyle-result.xml
+
+  frontend:
+    name: Frontend (ESLint, Tests, Build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: angular-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: angular-frontend/package-lock.json
+      - run: npm ci
+      - name: ESLint (statische Analyse)
+        run: npm run lint -- --format json --output-file eslint-report.json || npm run lint
+      - name: Unit-Tests
+        run: npm test -- --watch=false
+      - name: Produktions-Build
+        run: npm run build
+      - name: Bericht hochladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-berichte
+          path: angular-frontend/eslint-report.json

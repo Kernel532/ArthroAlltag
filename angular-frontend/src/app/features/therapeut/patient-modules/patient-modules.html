@@ -1,0 +1,44 @@
+<div class="mt-4 border-t border-slate-200 pt-4">
+  <h4 class="text-base font-semibold text-slate-900 mb-3">Module freischalten</h4>
+
+  <app-error-message [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-loading-spinner text="Lade Module ..." />
+  } @else {
+    <div class="space-y-2">
+      @for (modul of modules(); track modul.id) {
+        <div class="bg-slate-50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div class="min-w-0">
+            <p class="text-base font-semibold text-slate-900">{{ modul.reihenfolge }}. {{ modul.name }}</p>
+            @if (modul.beschreibung) {
+              <p class="text-slate-600 text-sm">{{ modul.beschreibung }}</p>
+            }
+          </div>
+          @if (isUnlocked(modul.id)) {
+            <div class="flex flex-wrap items-center gap-2 sm:shrink-0">
+              <span class="rounded-full bg-green-50 text-green-700 text-sm font-medium px-3 py-2">&#10003; Freigeschaltet</span>
+              <button
+                type="button"
+                (click)="reset(modul)"
+                [disabled]="revokingModuleId() === modul.id"
+                class="rounded-lg bg-slate-200 text-slate-700 text-sm font-medium px-3 py-2 hover:bg-slate-300 disabled:opacity-50 transition-colors"
+              >
+                {{ revokingModuleId() === modul.id ? 'Zuruecksetzen ...' : 'Zuruecksetzen' }}
+              </button>
+            </div>
+          } @else {
+            <button
+              type="button"
+              (click)="unlock(modul)"
+              [disabled]="unlockingModuleId() === modul.id"
+              class="sm:shrink-0 rounded-lg bg-blue-600 text-white text-sm font-medium px-3 py-2 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {{ unlockingModuleId() === modul.id ? 'Freischalten ...' : 'Freischalten' }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

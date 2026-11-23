@@ -9,11 +9,14 @@ public record ContentResponse(
     String titel,
     String beschreibung,
     CategoryResponse kategorie,
+    ModuleResponse modul,
     String bildUrl,
     Schwierigkeitsgrad schwierigkeitsgrad,
     String hilfsmittel,
     String erstelltDurchName,
     LocalDateTime erstelltAm,
-    LocalDateTime aktualisiertAm
+    LocalDateTime aktualisiertAm,
+    Double durchschnittsBewertung,
+    long anzahlBewertungen
 ) {
 }

@@ -3,4 +3,5 @@ export interface Patient {
   vorname: string;
   nachname: string;
   diagnostik: string;
+  therapeutId: string | null;
 }

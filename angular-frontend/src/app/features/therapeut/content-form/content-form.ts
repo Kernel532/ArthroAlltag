@@ -1,6 +1,7 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
 
 import { Category } from '../../../shared/models/category.model';
+import { Modul } from '../../../shared/models/modul.model';
 import { Content, ContentCreateRequest, Schwierigkeitsgrad } from '../../../shared/models/content.model';
 import { ErrorMessage } from '../../../shared/components/error-message/error-message';
 
@@ -17,6 +18,7 @@ import { ErrorMessage } from '../../../shared/components/error-message/error-mes
 export class ContentForm {
   readonly content = input<Content | null>(null);
   readonly categories = input.required<Category[]>();
+  readonly modules = input.required<Modul[]>();
   readonly errorMessage = input<string | null>(null);
   readonly isSaving = input(false);
 
@@ -26,11 +28,12 @@ export class ContentForm {
   protected readonly titel = signal('');
   protected readonly beschreibung = signal('');
   protected readonly kategorieId = signal<number | null>(null);
+  protected readonly modulId = signal<number | null>(null);
   protected readonly bildUrl = signal('');
   protected readonly schwierigkeitsgrad = signal<Schwierigkeitsgrad | ''>('');
   protected readonly hilfsmittel = signal('');
 
-  protected readonly isValid = computed(() => this.titel().trim() !== '' && this.beschreibung().trim() !== '' && this.kategorieId() != null);
+  protected readonly isValid = computed(() => this.titel().trim() !== '' && this.beschreibung().trim() !== '' && this.kategorieId() != null && this.modulId() != null);
 
   constructor() {
     // Laeuft bei jedem Wechsel von `content` (neuer Tipp <-> vorhandenen Tipp bearbeiten)
@@ -40,6 +43,7 @@ export class ContentForm {
       this.titel.set(current?.titel ?? '');
       this.beschreibung.set(current?.beschreibung ?? '');
       this.kategorieId.set(current?.kategorie.id ?? null);
+      this.modulId.set(current?.modul?.id ?? null);
       this.bildUrl.set(current?.bildUrl ?? '');
       this.schwierigkeitsgrad.set(current?.schwierigkeitsgrad ?? '');
       this.hilfsmittel.set(current?.hilfsmittel ?? '');
@@ -57,6 +61,11 @@ export class ContentForm {
   protected onKategorieChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.kategorieId.set(value === '' ? null : Number(value));
+  }
+
+  protected onModulChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.modulId.set(value === '' ? null : Number(value));
   }
 
   protected onBildUrlInput(event: Event): void {
@@ -80,6 +89,7 @@ export class ContentForm {
       titel: this.titel().trim(),
       beschreibung: this.beschreibung().trim(),
       kategorieId: this.kategorieId()!,
+      modulId: this.modulId()!,
       bildUrl: this.bildUrl().trim() || null,
       schwierigkeitsgrad: this.schwierigkeitsgrad() || null,
       hilfsmittel: this.hilfsmittel().trim() || null

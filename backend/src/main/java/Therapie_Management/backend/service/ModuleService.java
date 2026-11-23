@@ -17,7 +17,6 @@ import Therapie_Management.backend.exception.ValidationException;
 import Therapie_Management.backend.repository.ModuleRepository;
 import Therapie_Management.backend.repository.PatientModuleAccessRepository;
 import Therapie_Management.backend.repository.PatientRepository;
-import Therapie_Management.backend.repository.TherapeutRepository;
 
 @Service
 @Transactional
@@ -25,16 +24,18 @@ public class ModuleService {
 
     private final ModuleRepository moduleRepository;
     private final PatientRepository patientRepository;
-    private final TherapeutRepository therapeutRepository;
     private final PatientModuleAccessRepository patientModuleAccessRepository;
+    private final EntityFinder finder;
+    private final AssignmentGuard assignmentGuard;
 
     public ModuleService(ModuleRepository moduleRepository, PatientRepository patientRepository,
-                          TherapeutRepository therapeutRepository,
-                          PatientModuleAccessRepository patientModuleAccessRepository) {
+                          PatientModuleAccessRepository patientModuleAccessRepository,
+                          EntityFinder finder, AssignmentGuard assignmentGuard) {
         this.moduleRepository = moduleRepository;
         this.patientRepository = patientRepository;
-        this.therapeutRepository = therapeutRepository;
         this.patientModuleAccessRepository = patientModuleAccessRepository;
+        this.finder = finder;
+        this.assignmentGuard = assignmentGuard;
     }
 
     /** Fuer GET /api/modules - alle 4 fest vorgegebenen Module, unabhaengig vom Freischaltstatus. */
@@ -56,10 +57,17 @@ public class ModuleService {
             .toList();
     }
 
+    /** Freischaltstatus eines Patienten aus Therapeuten-Sicht - nur fuer zugeordnete Patienten. */
+    public List<ModuleResponse> getUnlockedModulesForTherapeut(String therapeutId, String patientId) {
+        assignmentGuard.ensureAssigned(therapeutId, finder.patient(patientId));
+        return getUnlockedModules(patientId);
+    }
+
     public void unlockModule(String therapeutId, UnlockModuleRequest request) {
-        Therapeut therapeut = findTherapeutOrThrow(therapeutId);
-        Patient patient = findPatientOrThrow(request.patientId());
-        Module modul = findModulOrThrow(request.modulId());
+        Therapeut therapeut = finder.therapeut(therapeutId);
+        Patient patient = finder.patient(request.patientId());
+        assignmentGuard.ensureAssigned(therapeutId, patient);
+        Module modul = finder.modul(request.modulId());
 
         if (patientModuleAccessRepository.existsByPatientIdAndModulId(request.patientId(), request.modulId())) {
             throw new ValidationException("Modul ist fuer diesen Patienten bereits freigeschaltet");
@@ -74,30 +82,15 @@ public class ModuleService {
      * jederzeit erneut freigeschaltet werden.
      */
     public void revokeModule(String therapeutId, String patientId, Integer modulId) {
-        findTherapeutOrThrow(therapeutId);
-        findPatientOrThrow(patientId);
-        findModulOrThrow(modulId);
+        finder.therapeut(therapeutId);
+        assignmentGuard.ensureAssigned(therapeutId, finder.patient(patientId));
+        finder.modul(modulId);
 
         if (!patientModuleAccessRepository.existsByPatientIdAndModulId(patientId, modulId)) {
             throw new ValidationException("Modul ist fuer diesen Patienten nicht freigeschaltet");
         }
 
         patientModuleAccessRepository.deleteByPatientIdAndModulId(patientId, modulId);
-    }
-
-    private Therapeut findTherapeutOrThrow(String therapeutId) {
-        return therapeutRepository.findById(therapeutId)
-            .orElseThrow(() -> new ResourceNotFoundException("Therapeut nicht gefunden: " + therapeutId));
-    }
-
-    private Patient findPatientOrThrow(String patientId) {
-        return patientRepository.findById(patientId)
-            .orElseThrow(() -> new ResourceNotFoundException("Patient nicht gefunden: " + patientId));
-    }
-
-    private Module findModulOrThrow(Integer modulId) {
-        return moduleRepository.findById(modulId)
-            .orElseThrow(() -> new ResourceNotFoundException("Modul nicht gefunden: " + modulId));
     }
 
     private ModuleResponse toResponse(Module modul) {

@@ -45,6 +45,12 @@ public class Content {
     @JoinColumn(name = "kategorie_id", nullable = false)
     private Category kategorie;
 
+    // In der DB nullable, damit bestehende Datenbanken per ddl-auto=update migrierbar bleiben;
+    // Inhalte ohne Modul sind fuer Patienten unsichtbar.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "modul_id")
+    private Module modul;
+
     @Column(name = "bild_url")
     private String bildUrl;
 

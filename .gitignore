@@ -44,3 +44,7 @@ angular-frontend/.vscode/*
 !angular-frontend/.vscode/extensions.json
 !angular-frontend/.vscode/mcp.json
 backend/.vscode/
+
+### Persistente H2-Datenbank ###
+backend/data/
+angular-frontend/eslint-report.json

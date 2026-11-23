@@ -11,30 +11,27 @@ import Therapie_Management.backend.entity.PatientFavorite;
 import Therapie_Management.backend.exception.ForbiddenException;
 import Therapie_Management.backend.exception.ResourceNotFoundException;
 import Therapie_Management.backend.exception.ValidationException;
-import Therapie_Management.backend.repository.ContentRepository;
 import Therapie_Management.backend.repository.PatientFavoriteRepository;
-import Therapie_Management.backend.repository.PatientRepository;
 
 @Service
 @Transactional
 public class FavoriteService {
 
-    private final PatientRepository patientRepository;
-    private final ContentRepository contentRepository;
     private final PatientFavoriteRepository patientFavoriteRepository;
+    private final ContentAccessService accessService;
+    private final EntityFinder finder;
 
-    public FavoriteService(PatientRepository patientRepository, ContentRepository contentRepository,
-                            PatientFavoriteRepository patientFavoriteRepository) {
-        this.patientRepository = patientRepository;
-        this.contentRepository = contentRepository;
+    public FavoriteService(PatientFavoriteRepository patientFavoriteRepository, ContentAccessService accessService,
+                            EntityFinder finder) {
         this.patientFavoriteRepository = patientFavoriteRepository;
+        this.accessService = accessService;
+        this.finder = finder;
     }
 
     public FavoriteResponse addFavorite(String patientId, FavoriteCreateRequest request) {
-        Patient patient = patientRepository.findById(patientId)
-            .orElseThrow(() -> new ResourceNotFoundException("Patient nicht gefunden: " + patientId));
-        Content tipp = contentRepository.findById(request.tippId())
-            .orElseThrow(() -> new ResourceNotFoundException("Tipp nicht gefunden: " + request.tippId()));
+        Patient patient = finder.patient(patientId);
+        Content tipp = finder.content(request.tippId());
+        accessService.ensureVisible(patientId, tipp);
 
         if (patientFavoriteRepository.existsByPatientIdAndTippId(patientId, request.tippId())) {
             throw new ValidationException("Tipp ist bereits favorisiert");
