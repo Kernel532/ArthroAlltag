@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 public class AuthController {
 
     private final AuthService authService;
+    private String name;
 
     public AuthController(AuthService authService) {
         this.authService = authService;
